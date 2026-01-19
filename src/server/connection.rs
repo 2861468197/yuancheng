@@ -2249,20 +2249,12 @@ impl Connection {
                 self.send_login_error(crate::client::LOGIN_MSG_OFFLINE)
                     .await;
                 return false;
-            } else if (password::approve_mode() == ApproveMode::Click
-                && !(crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
-                    && is_logon()))
-                || password::approve_mode() == ApproveMode::Both && !password::has_valid_password()
-            {
-                self.try_start_cm(lr.my_id, lr.my_name, false);
-                if hbb_common::get_version_number(&lr.version)
-                    >= hbb_common::get_version_number("1.2.0")
-                {
-                    self.send_login_error(crate::client::LOGIN_MSG_NO_PASSWORD_ACCESS)
-                        .await;
-                }
-                return true;
-            } else if self.is_recent_session(false) {
+           } else if !password::has_valid_password()
+               && password::approve_mode() != ApproveMode::Password
+               && !is_logon()
+           {
+               // 空着即可，fall through
+           } else if self.is_recent_session(false) {
                 if err_msg.is_empty() {
                     #[cfg(target_os = "linux")]
                     self.linux_headless_handle.wait_desktop_cm_ready().await;
